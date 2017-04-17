@@ -1,9 +1,13 @@
 import java.io.*;
 import java.net.*;
+import java.util.Scanner;
 
 public class Retrieve {
     public static void main(String[] args) throws IOException {
-        String host = "www.google.com";
+        Scanner scanner = new Scanner( System.in );
+        System.out.print( "Enter URL or the server's address: " );
+        String host = scanner.nextLine();
+
         PrintWriter s_out = null;
         BufferedReader s_in = null;
 
