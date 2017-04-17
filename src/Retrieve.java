@@ -8,6 +8,9 @@ public class Retrieve {
         System.out.print( "Enter URL or the server's address: " );
         String host = scanner.nextLine();
 
+        System.out.print( "Enter the file path/name: " );
+        String path = scanner.nextLine();
+
         PrintWriter s_out = null;
         BufferedReader s_in = null;
 
@@ -30,7 +33,7 @@ public class Retrieve {
         }
 
         // Sends an HTTP GET request to the web server
-        String message = "GET / HTTP/1.1\r\n\r\n";
+        String message = "GET " + path + " HTTP/1.1\r\n\r\n";
         s_out.println(message);
         System.out.println("GET request has been sent!");
 
