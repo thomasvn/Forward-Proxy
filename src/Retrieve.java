@@ -1,41 +1,47 @@
-//java socket client example
 import java.io.*;
 import java.net.*;
 
 public class Retrieve {
     public static void main(String[] args) throws IOException {
-        Socket s = new Socket();
         String host = "www.google.com";
         PrintWriter s_out = null;
         BufferedReader s_in = null;
 
+        // Instantiate the TCP client socket
+        Socket s = new Socket();
+
         try {
             s.connect(new InetSocketAddress(host, 80));
-            System.out.println("Connected");
+            System.out.println("Successful connection to: (" + host + ")");
 
-            //writer for socket
+            // Instantiate the objects to write/read to the socket
             s_out = new PrintWriter(s.getOutputStream(), true);
-            //reader for socket
             s_in = new BufferedReader(new InputStreamReader(s.getInputStream()));
         }
 
-        //Host not found
+        // Exception is thrown if it is unable to properly connect to host
         catch (UnknownHostException e) {
-            System.err.println("Don't know about host : " + host);
+            System.err.println("Unable to connect to host :(" + host + ")");
             System.exit(1);
         }
 
-        //Send message to server
+        // Sends an HTTP GET request to the web server
         String message = "GET / HTTP/1.1\r\n\r\n";
         s_out.println(message);
+        System.out.println("GET request has been sent!");
 
-        System.out.println("Message send");
-
-        //Get response from server
+        // Retrieve the response from the server and print
         String response;
         while ((response = s_in.readLine()) != null) {
             System.out.println(response);
         }
+
+        // Close the IO streams
+        s_out.close();
+        s_in.close();
+
+        // Close the socket
+        s.close();
     }
 }
 
