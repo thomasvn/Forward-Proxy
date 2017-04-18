@@ -11,44 +11,38 @@ public class Retrieve {
         System.out.print( "Enter the file path/name: " );
         String path = scanner.nextLine();
 
-        PrintWriter s_out = null;
-        BufferedReader s_in = null;
 
         // Instantiate the TCP client socket
-        Socket s = new Socket();
+        Socket socket = new Socket( host, 80 );
 
-        try {
-            s.connect(new InetSocketAddress(host, 80));
-            System.out.println("Successful connection to: (" + host + ")");
-
-            // Instantiate the objects to write/read to the socket
-            s_out = new PrintWriter(s.getOutputStream(), true);
-            s_in = new BufferedReader(new InputStreamReader(s.getInputStream()));
-        }
-
-        // Exception is thrown if it is unable to properly connect to host
-        catch (UnknownHostException e) {
-            System.err.println("Unable to connect to host :(" + host + ")");
-            System.exit(1);
-        }
+        // Instantiate the objects to write to the socket
+        PrintWriter outStream = new PrintWriter(socket.getOutputStream());
 
         // Sends an HTTP GET request to the web server
-        String message = "GET " + path + " HTTP/1.1\r\n\r\n";
-        s_out.println(message);
-        System.out.println("GET request has been sent!");
+        outStream.print("GET " + path + " HTTP/1.1\r\n" +
+                "Host: " + host + "\r\n" +
+                "Connection: close\r\n\r\n");
+        outStream.flush();
 
-        // Retrieve the response from the server and print
-        String response;
-        while ((response = s_in.readLine()) != null) {
-            System.out.println(response);
+        // Instantiate the objects to read to the socket
+        InputStream inStream = socket.getInputStream( );
+
+        // Retrieve the response from the stream and print
+        BufferedReader rd = new BufferedReader(
+                new InputStreamReader(inStream));
+        String line;
+        while ((line = rd.readLine()) != null) {
+            System.out.println(line);
         }
 
+        System.out.println("End of HTTP request");
+
         // Close the IO streams
-        s_out.close();
-        s_in.close();
+        outStream.close();
+        inStream.close();
 
         // Close the socket
-        s.close();
+        socket.close();
     }
 }
 
