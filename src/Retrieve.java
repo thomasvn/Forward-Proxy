@@ -15,8 +15,9 @@ public class Retrieve {
         // Instantiate the TCP client socket
         Socket socket = new Socket( host, 80 );
 
-        // Instantiate the objects to write to the socket
+        // Instantiate the objects to write/read to the socket
         PrintWriter outStream = new PrintWriter(socket.getOutputStream());
+        InputStream inStream = socket.getInputStream( );
 
         // Sends an HTTP GET request to the web server
         outStream.print("GET " + path + " HTTP/1.1\r\n" +
@@ -24,10 +25,7 @@ public class Retrieve {
                 "Connection: close\r\n\r\n");
         outStream.flush();
 
-        // Instantiate the objects to read to the socket
-        InputStream inStream = socket.getInputStream( );
-
-        // Retrieve the response from the stream and print
+        // Read the response from the stream and print
         BufferedReader rd = new BufferedReader(
                 new InputStreamReader(inStream));
         String line;
