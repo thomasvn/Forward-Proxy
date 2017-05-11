@@ -9,44 +9,20 @@ public class Retrieve implements Runnable {
     @Override
     public void run() {
         System.out.println(REQUEST);
-    }
-
-    public static void main(String[] args) throws IOException {
-        int PORT_NUMBER = 3000;
-        String IP_ADDRESS;
-        ServerSocket serverSocket;
-        Socket socket;
-        Thread handleRequest;
-
-        // Get & display IP of the current machine
-        serverSocket = new ServerSocket(PORT_NUMBER);
-        IP_ADDRESS = InetAddress.getLocalHost().getHostAddress();
-        System.out.println(IP_ADDRESS + " at port number: " + PORT_NUMBER);
-
-        // Listen for new socket connections from hosts/browsers that make requests to it
-        while (true) {
-            socket = serverSocket.accept();
-
-            // Read the input stream of messages from other hosts
-            BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            String command = br.readLine();
-
-            // Pass the request to the other thread by placing it into the global scope
-            REQUEST = command;
-
-            handleRequest = new Thread(new Retrieve());
-            handleRequest.start();
-
-            socket.close();
+        int slashCount = 0;
+        for(int i = 0; i < REQUEST.length(); i++) {
+            if(REQUEST.charAt(i) == "/") {
+                slashCount++;
+            }
         }
+        System.out.println(slashCount);
+
+
+//        String host;
 //
-//        Scanner scanner = new Scanner( System.in );
-//        System.out.print( "Enter URL or the server's address: " );
-//        String host = scanner.nextLine();
+//        String path;
 //
-//        System.out.print( "Enter the file path/name: " );
-//        String path = scanner.nextLine();
-//
+//        Socket socket;
 //
 //        // Instantiate the TCP client socket
 //        socket = new Socket( host, 80 );
@@ -82,6 +58,37 @@ public class Retrieve implements Runnable {
 //
 //        // Close the socket
 //        socket.close();
+    }
+
+    public static void main(String[] args) throws IOException {
+        int PORT_NUMBER = 3000;
+        String IP_ADDRESS;
+        ServerSocket serverSocket;
+        Socket socket;
+        Thread handleRequest;
+
+        // Get & display IP of the current machine
+        serverSocket = new ServerSocket(PORT_NUMBER);
+        IP_ADDRESS = InetAddress.getLocalHost().getHostAddress();
+        System.out.println(IP_ADDRESS + " at port number: " + PORT_NUMBER);
+
+        // Listen for new socket connections from hosts/browsers that make requests to it
+        while (true) {
+            socket = serverSocket.accept();
+
+            // Read the input stream of messages from other hosts
+            BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            String command = br.readLine();
+
+            // Pass the request to the other thread by placing it into the global scope
+            REQUEST = command;
+
+            handleRequest = new Thread(new Retrieve());
+            handleRequest.start();
+
+            socket.close();
+        }
+
     }
 }
 
