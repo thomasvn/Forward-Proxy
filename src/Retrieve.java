@@ -4,14 +4,15 @@ import java.util.Scanner;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class Retrieve implements Runnable {
-    private static String REQUEST = "";
+    private static String browserRequest = "";
+    private static Socket browserSocket;
 
     @Override
     public void run() {
-        System.out.println(REQUEST);
+        System.out.println(browserRequest);
         int slashCount = 0;
-        for(int i = 0; i < REQUEST.length(); i++) {
-            if(REQUEST.charAt(i) == "/") {
+        for(int i = 0; i < browserRequest.length(); i++) {
+            if(browserRequest.charAt(i) == "/") {
                 slashCount++;
             }
         }
@@ -58,37 +59,51 @@ public class Retrieve implements Runnable {
 //
 //        // Close the socket
 //        socket.close();
+
+        try {
+            // Send the HTML page back to the browser which requested it
+            String testCommand = "<html><h1>hello world</h1></html>";
+            OutputStream os = browserSocket.getOutputStream();
+            os.write(testCommand.getBytes());
+            os.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         int PORT_NUMBER = 3000;
         String IP_ADDRESS;
         ServerSocket serverSocket;
         Socket socket;
         Thread handleRequest;
 
-        // Get & display IP of the current machine
-        serverSocket = new ServerSocket(PORT_NUMBER);
-        IP_ADDRESS = InetAddress.getLocalHost().getHostAddress();
-        System.out.println(IP_ADDRESS + " at port number: " + PORT_NUMBER);
+        try {
+            // Get & display IP of the current machine
+            serverSocket = new ServerSocket(PORT_NUMBER);
+            IP_ADDRESS = InetAddress.getLocalHost().getHostAddress();
+            System.out.println(IP_ADDRESS + " at port number: " + PORT_NUMBER);
 
-        // Listen for new socket connections from hosts/browsers that make requests to it
-        while (true) {
-            socket = serverSocket.accept();
+            // Listen for new socket connections from hosts/browsers that make requests to it
+            while (true) {
+                socket = serverSocket.accept();
 
-            // Read the input stream of messages from other hosts
-            BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            String command = br.readLine();
+                // Read the input stream of messages from other hosts
+                BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                String command = br.readLine();
 
-            // Pass the request to the other thread by placing it into the global scope
-            REQUEST = command;
+                // Pass the request to the other thread by placing it into the global scope
+                browserRequest = command;
+                browserSocket = socket;
 
-            handleRequest = new Thread(new Retrieve());
-            handleRequest.start();
+                handleRequest = new Thread(new Retrieve());
+                handleRequest.start();
 
-            socket.close();
+                socket.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-
     }
 }
 
