@@ -4,106 +4,101 @@ import java.util.Scanner;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class Retrieve implements Runnable {
-    private static String browserRequest = "";
-    private static Socket browserSocket;
+    private static String REQUEST = "";
+
+
 
     @Override
     public void run() {
-        System.out.println(browserRequest);
+        String host = "";
+        String path = "";
+
+
+        System.out.println(REQUEST);
         int slashCount = 0;
-        for(int i = 0; i < browserRequest.length(); i++) {
-            if(browserRequest.charAt(i) == "/") {
+        for(int i = 0; i < REQUEST.length(); i++) {
+            if(REQUEST.charAt(i) == '/') {
                 slashCount++;
+                if(slashCount == 3) {
+                    host = REQUEST.substring(0,i);
+                    host = host.split(" ")[1];
+                    path = REQUEST.substring(i);
+                    path = path.split(" ")[0];
+                }
             }
         }
-        System.out.println(slashCount);
+        System.out.println("host: " + host);
+        System.out.println("path: " + path);
 
 
-//        String host;
-//
-//        String path;
-//
-//        Socket socket;
-//
-//        // Instantiate the TCP client socket
-//        socket = new Socket( host, 80 );
-//
-//        // Instantiate the objects to write/read to the socket
-//        PrintWriter outStream = new PrintWriter(socket.getOutputStream());
-//        InputStream inStream = socket.getInputStream( );
-//
-//        // Log the HTTP GET request to the terminal
-//        System.out.println("\nGET " + path + " HTTP/1.1\r\n" +
-//                "Host: " + host + "\r\n" +
-//                "Connection: close\r\n\r\n");
-//
-//        // Sends an HTTP GET request to the web server
-//        outStream.print("GET " + path + " HTTP/1.1\r\n" +
-//                "Host: " + host + "\r\n" +
-//                "Connection: close\r\n\r\n");
-//        outStream.flush();
-//
-//        // Read the response from the stream and print
-//        BufferedReader rd = new BufferedReader(
-//                new InputStreamReader(inStream));
-//        String line;
-//        while ((line = rd.readLine()) != null) {
-//            System.out.println(line);
-//        }
-//
-//        System.out.println("End of HTTP request");
-//
-//        // Close the IO streams
-//        outStream.close();
-//        inStream.close();
-//
-//        // Close the socket
-//        socket.close();
 
-        try {
-            // Send the HTML page back to the browser which requested it
-            String testCommand = "<html><h1>hello world</h1></html>";
-            OutputStream os = browserSocket.getOutputStream();
-            os.write(testCommand.getBytes());
-            os.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+        Socket socket;
+
+        // Instantiate the TCP client socket
+        socket = new Socket( host, 80 );
+
+        // Instantiate the objects to write/read to the socket
+        PrintWriter outStream = new PrintWriter(socket.getOutputStream());
+        InputStream inStream = socket.getInputStream( );
+
+        // Log the HTTP GET request to the terminal
+        System.out.println("\nGET " + path + " HTTP/1.1\r\n" +
+                "Host: " + host + "\r\n" +
+                "Connection: close\r\n\r\n");
+
+        // Sends an HTTP GET request to the web server
+        outStream.print("GET " + path + " HTTP/1.1\r\n" +
+                "Host: " + host + "\r\n" +
+                "Connection: close\r\n\r\n");
+        outStream.flush();
+
+        // Read the response from the stream and print
+        BufferedReader rd = new BufferedReader(
+                new InputStreamReader(inStream));
+        String line;
+        while ((line = rd.readLine()) != null) {
+            System.out.println(line);
         }
+
+        System.out.println("End of HTTP request");
+
+        // Close the IO streams
+        outStream.close();
+        inStream.close();
+
+        // Close the socket
+        socket.close();
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         int PORT_NUMBER = 3000;
         String IP_ADDRESS;
         ServerSocket serverSocket;
         Socket socket;
         Thread handleRequest;
 
-        try {
-            // Get & display IP of the current machine
-            serverSocket = new ServerSocket(PORT_NUMBER);
-            IP_ADDRESS = InetAddress.getLocalHost().getHostAddress();
-            System.out.println(IP_ADDRESS + " at port number: " + PORT_NUMBER);
+        // Get & display IP of the current machine
+        serverSocket = new ServerSocket(PORT_NUMBER);
+        IP_ADDRESS = InetAddress.getLocalHost().getHostAddress();
+        System.out.println(IP_ADDRESS + " at port number: " + PORT_NUMBER);
 
-            // Listen for new socket connections from hosts/browsers that make requests to it
-            while (true) {
-                socket = serverSocket.accept();
+        // Listen for new socket connections from hosts/browsers that make requests to it
+        while (true) {
+            socket = serverSocket.accept();
 
-                // Read the input stream of messages from other hosts
-                BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                String command = br.readLine();
+            // Read the input stream of messages from other hosts
+            BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            String command = br.readLine();
 
-                // Pass the request to the other thread by placing it into the global scope
-                browserRequest = command;
-                browserSocket = socket;
+            // Pass the request to the other thread by placing it into the global scope
+            REQUEST = command;
 
-                handleRequest = new Thread(new Retrieve());
-                handleRequest.start();
+            handleRequest = new Thread(new Retrieve());
+            handleRequest.start();
 
-                socket.close();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+            socket.close();
         }
+
     }
 }
 
