@@ -3,26 +3,39 @@ import java.net.*;
 import java.util.Scanner;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class Retrieve {
+public class Retrieve implements Runnable {
+    private static String REQUEST = "";
+
+    @Override
+    public void run() {
+        System.out.println(REQUEST);
+    }
+
     public static void main(String[] args) throws IOException {
         int PORT_NUMBER = 3000;
         String IP_ADDRESS;
         ServerSocket serverSocket;
         Socket socket;
+        Thread handleRequest;
 
         // Get & display IP of the current machine
         serverSocket = new ServerSocket(PORT_NUMBER);
         IP_ADDRESS = InetAddress.getLocalHost().getHostAddress();
         System.out.println(IP_ADDRESS + " at port number: " + PORT_NUMBER);
 
-        // Listen for new socket connections to from hosts that request it
+        // Listen for new socket connections from hosts/browsers that make requests to it
         while (true) {
             socket = serverSocket.accept();
 
             // Read the input stream of messages from other hosts
             BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            String dataStreamCommand = br.readLine();
-            System.out.println(dataStreamCommand);
+            String command = br.readLine();
+
+            // Pass the request to the other thread by placing it into the global scope
+            REQUEST = command;
+
+            handleRequest = new Thread(new Retrieve());
+            handleRequest.start();
 
             socket.close();
         }
