@@ -9,25 +9,17 @@ public class Retrieve implements Runnable {
 
     @Override
     public void run() {
-        // Do not process requests containing these keywords
-        if (browserRequest.contains("sophos") || browserRequest.equals("null")) {
-            return;
-        }
-
         String host = "";
         String path = "";
 
         System.out.println(browserRequest);
         host = browserRequest.split("/")[2];
-//        path = browserRequest.split("/")[3];
 
         int slashCount = 0;
         for(int i = 0; i < browserRequest.length(); i++) {
             if(browserRequest.charAt(i) == '/') {
                 slashCount++;
                 if(slashCount == 3) {
-//                    host = browserRequest.substring(0,i);
-//                    host = host.split(" ")[1];
                     path = browserRequest.substring(i);
                     path = path.split(" ")[0];
                 }
@@ -59,9 +51,23 @@ public class Retrieve implements Runnable {
             BufferedReader rd = new BufferedReader(
                     new InputStreamReader(inStream));
             String line;
+            String html = "";
+            int flag = 0;
             while ((line = rd.readLine()) != null) {
-                System.out.println(line);
+//                System.out.println(line);
+                if (line.contains("<HTML>")) {
+                    flag = 1;
+                }
+                if (flag == 1) {
+                    html += (line + "\n");
+                }
             }
+
+            System.out.println(html);
+
+            OutputStream os = browserSocket.getOutputStream();
+            os.write(html.getBytes());
+            os.close();
 
             System.out.println("End of HTTP request");
 
@@ -98,11 +104,19 @@ public class Retrieve implements Runnable {
                 String command = br.readLine();
 
                 // Pass the request to the other thread by placing it into the global scope
-                browserRequest = command;
-                browserSocket = socket;
+                if (!command.contains("sophos") && !command.contains("favicon")) {
+                    browserRequest = command;
+                    browserSocket = socket;
 
-                handleRequest = new Thread(new Retrieve());
-                handleRequest.start();
+                    String test = "<html><h1>hello world</h1></html>";
+                    OutputStream os = browserSocket.getOutputStream();
+                    os.write(test.getBytes());
+                    os.close();
+
+
+                    handleRequest = new Thread(new Retrieve());
+                    handleRequest.start();
+                }
 
                 socket.close();
             }
