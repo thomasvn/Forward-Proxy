@@ -6,12 +6,11 @@ import java.util.concurrent.ThreadLocalRandom;
 public class Retrieve implements Runnable {
     private static String browserRequest = "";
     private static Socket browserSocket;
-    private static String browserIP;
-    private static int browserPort;
-
 
     @Override
     public void run() {
+        Socket threadSocket = browserSocket;
+
         String host = "";
         String path = "";
 
@@ -67,19 +66,18 @@ public class Retrieve implements Runnable {
 
 //            System.out.println(html);
 
-//            Socket browser = new Socket(browserIP, browserPort);
-            OutputStream os = browserSocket.getOutputStream();
+            OutputStream os = threadSocket.getOutputStream();
             os.write(html.getBytes());
-//            os.close();
+            os.close();
 
             System.out.println("End of HTTP request");
 
             // Close the IO streams
-//            outStream.close();
+            outStream.close();
             inStream.close();
 
             // Close the socket
-//            socket.close();
+            socket.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -108,23 +106,13 @@ public class Retrieve implements Runnable {
 
                 // Pass the request to the other thread by placing it into the global scope
                 if (!command.contains("sophos") && !command.contains("favicon")) {
-                    System.out.println("INSIDE");
                     browserRequest = command;
                     browserSocket = socket;
-                    browserIP = socket.getInetAddress().getHostAddress();
-                    browserPort = socket.getPort();
-
-                    String test = "<html><h1>hello world</h1></html>";
-                    OutputStream os = browserSocket.getOutputStream();
-                    os.write(test.getBytes());
-//                    os.close();
-
+                    System.out.println("SOCKET PORT: " + socket.getPort());
 
                     handleRequest = new Thread(new Retrieve());
                     handleRequest.start();
                 }
-
-//                socket.close();
             }
         } catch (IOException e) {
             e.printStackTrace();
