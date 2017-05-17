@@ -41,12 +41,14 @@ public class Retrieve implements Runnable {
             // Log the HTTP GET request to the terminal
             System.out.println("\nGET " + path + " HTTP/1.1\r\n" +
                     "Host: " + host + "\r\n" +
-                    "Connection: close\r\n\r\n");
+                    "Connection: close\r\n" +
+                    "coen168: 1234\r\n\r\n");
 
             // Sends an HTTP GET request to the web server
             outStream.print("GET " + path + " HTTP/1.1\r\n" +
                     "Host: " + host + "\r\n" +
-                    "Connection: close\r\n\r\n");
+                    "Connection: close\r\n" +
+                    "coen168: 1234\r\n\r\n");
             outStream.flush();
 
             // Read the response from the stream and print
@@ -55,7 +57,7 @@ public class Retrieve implements Runnable {
             String html = "";
             int flag = 0;
             while ((line = rd.readLine()) != null) {
-//                System.out.println(line);
+                System.out.println(line);
                 if (line.contains("<HTML>")) {
                     flag = 1;
                 }
@@ -103,9 +105,10 @@ public class Retrieve implements Runnable {
                 // Read the input stream of messages from other hosts
                 BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 String command = br.readLine();
+                System.out.println("Command: " + command);
 
                 // Pass the request to the other thread by placing it into the global scope
-                if (!command.contains("sophos") && !command.contains("favicon")) {
+                if (!command.contains("sophos") && !command.contains("null")) {
                     browserRequest = command;
                     browserSocket = socket;
                     System.out.println("SOCKET PORT: " + socket.getPort());
