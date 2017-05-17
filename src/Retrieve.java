@@ -1,7 +1,5 @@
 import java.io.*;
 import java.net.*;
-import java.util.Scanner;
-import java.util.concurrent.ThreadLocalRandom;
 
 public class Retrieve implements Runnable {
     private static String browserRequest = "";
@@ -29,6 +27,8 @@ public class Retrieve implements Runnable {
         }
         System.out.println("host: " + host);
         System.out.println("path: " + path);
+
+        path += "?coen168=1234"; // Added parameters to GET request for demo
 
         try {
             // Instantiate the TCP client socket
