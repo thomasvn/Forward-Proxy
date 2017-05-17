@@ -59,10 +59,7 @@ public class Retrieve implements Runnable {
             while ((line = rd.readLine()) != null) {
                 System.out.println(line);
                 html += (line + "\n");
-
             }
-
-//            System.out.println(html);
 
             OutputStream os = threadSocket.getOutputStream();
             os.write(html.getBytes());
