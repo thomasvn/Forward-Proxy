@@ -58,12 +58,8 @@ public class Retrieve implements Runnable {
             int flag = 0;
             while ((line = rd.readLine()) != null) {
                 System.out.println(line);
-                if (line.contains("<HTML>")) {
-                    flag = 1;
-                }
-                if (flag == 1) {
-                    html += (line + "\n");
-                }
+                html += (line + "\n");
+
             }
 
 //            System.out.println(html);
