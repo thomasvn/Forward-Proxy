@@ -6,25 +6,25 @@ public class Retrieve implements Runnable {
     private static String browserRequest = "";
     private static Socket browserSocket;
 
-    int cacheSize = 10;
-    int cacheIndex = 0;
-    String[] hosts = new String[cacheSize];
-    String[] paths = new String[cacheSize];
-    String[] dates = new String[cacheSize];
-    String[] filenames = new String[cacheSize];
-
-    public void setHost(int index, String value) {
-        hosts[index] = value;
-    }
-    public void setPath(int index, String value) {
-        paths[index] = value;
-    }
-    public void setDate(int index, String value) {
-        paths[index] = value;
-    }
-    public void setFilename(int index, String value) {
-        paths[index] = value;
-    }
+//    int cacheSize = 10;
+//    int cacheIndex = 0;
+//    String[] hosts = new String[cacheSize];
+//    String[] paths = new String[cacheSize];
+//    String[] dates = new String[cacheSize];
+//    String[] filenames = new String[cacheSize];
+//
+//    public void setHost(int index, String value) {
+//        hosts[index] = value;
+//    }
+//    public void setPath(int index, String value) {
+//        paths[index] = value;
+//    }
+//    public void setDate(int index, String value) {
+//        paths[index] = value;
+//    }
+//    public void setFilename(int index, String value) {
+//        paths[index] = value;
+//    }
 
     @Override
     public void run() {
