@@ -6,6 +6,7 @@ public class Retrieve implements Runnable {
     private static String browserRequest = "";
     private static Socket browserSocket;
 
+
     @Override
     public void run() {
         Socket threadSocket = browserSocket;
@@ -46,7 +47,6 @@ public class Retrieve implements Runnable {
             // Sends cached data to browser if requested object is already in cache
             try {
                 br = new BufferedReader(new FileReader(filename + ".txt"));
-
                 while ((line = br.readLine()) != null) {
                     System.out.println(line);
                     html += (line + "\n");
@@ -100,7 +100,6 @@ public class Retrieve implements Runnable {
 
                 // Read the response from the stream using the "extract" method and print
                 String document = extract(inStream);
-                System.out.println(document);  // TODO: This statement currently prints out normally
                 String html = document;
 
                 OutputStream os = threadSocket.getOutputStream();
@@ -145,6 +144,7 @@ public class Retrieve implements Runnable {
         }
     }
 
+
     public static void main(String[] args) {
         int PORT_NUMBER = 3000;
         String IP_ADDRESS;
@@ -163,7 +163,7 @@ public class Retrieve implements Runnable {
                 socket = serverSocket.accept();
 
                 // Read the input stream of messages from other hosts
-                BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));  // TODO: Extract command does not work here
+                BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 String command = br.readLine();
                 if(command == null) {
                     System.out.println("null command!");
@@ -186,6 +186,15 @@ public class Retrieve implements Runnable {
         }
     }
 
+
+    /**
+     * This method takes an input stream and extracts all bytes that were sent. It places everything from the stream
+     * into a byte array. Then returns a conversion of this byte array to a string.
+     *
+     * @param inputStream
+     * @return
+     * @throws IOException
+     */
     private static String extract(InputStream inputStream) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         byte[] buffer = new byte[1024];
