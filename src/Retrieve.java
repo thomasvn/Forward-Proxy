@@ -51,7 +51,7 @@ public class Retrieve implements Runnable {
         System.out.println("host: " + host);
         System.out.println("path: " + path);
 
-        // Declare filename to be cached
+        // Filter out special characters for filename to be cached
         String filename = host + path;
         filename = filename.replaceAll("[^a-zA-Z]", "").toLowerCase();
         System.out.println("filename: " + filename);
@@ -65,6 +65,7 @@ public class Retrieve implements Runnable {
             String html = "";
             String line;
 
+            // Sends cached data to browser if requested object is already in cache
             try {
                 br = new BufferedReader(new FileReader(filename + ".txt"));
 
@@ -80,29 +81,19 @@ public class Retrieve implements Runnable {
                 System.out.println("Retrieved from cache");
 
             } catch (IOException e) {
-
                 e.printStackTrace();
-
             } finally {
-
                 try {
-
                     if (br != null)
                         br.close();
-
                     if (fr != null)
                         fr.close();
-
                 } catch (IOException ex) {
-
                     ex.printStackTrace();
-
                 }
-
             }
         }
         else {
-
 //        boolean inCache = false;
 //        for(int i = 0; i < hosts.length; i++) {
 //            System.out.println(host);
@@ -142,15 +133,10 @@ public class Retrieve implements Runnable {
 
                 outStream.flush();
 
-                // Read the response from the stream and print
-                BufferedReader rd = new BufferedReader(new InputStreamReader(inStream));
-                String line;
-                String html = "";
-                int flag = 0;
-                while ((line = rd.readLine()) != null) {
-                    System.out.println(line);
-                    html += (line + "\n");
-                }
+                // Read the response from the stream using the "extract" method and print
+                String document = extract(inStream);
+                System.out.println(document);
+                String html = document;
 
                 OutputStream os = threadSocket.getOutputStream();
                 os.write(html.getBytes());
@@ -176,17 +162,15 @@ public class Retrieve implements Runnable {
                     bw = new BufferedWriter(fw);
                     bw.write(html);
                     System.out.println("File cached successfully: " + filename + ".txt");
-
                 }
                 catch (IOException ioe) {
                     ioe.printStackTrace();
                 }
-                finally
-                {
+                finally {
                     try{
                         if(bw!=null)
                             bw.close();
-                    }catch(Exception ex){
+                    } catch(Exception ex){
                         System.out.println("Error in closing the BufferedWriter"+ex);
                     }
                 }
@@ -225,11 +209,9 @@ public class Retrieve implements Runnable {
                 socket = serverSocket.accept();
 
                 // Read the input stream of messages from other hosts
-                BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                String command = br.readLine();
+                String command = extract(socket.getInputStream());
                 if(command == null) {
                     System.out.println("null command!");
-
                     command = "";
                 }
                 System.out.println("Command: " + command);
@@ -247,6 +229,17 @@ public class Retrieve implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static String extract(InputStream inputStream) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        byte[] buffer = new byte[1024];
+        int read = 0;
+        while ((read = inputStream.read(buffer, 0, buffer.length)) != -1) {
+            baos.write(buffer, 0, read);
+        }
+        baos.flush();
+        return  new String(baos.toByteArray(), "UTF-8");
     }
 }
 
