@@ -86,17 +86,19 @@ public class Retrieve implements Runnable {
                     html += (line + "\n");
                 }
 
-                OutputStream os = threadSocket.getOutputStream();
-                os.write(html.getBytes());
-                os.close();
-                System.out.println("End of HTTP request");
-                System.out.println("Retrieved from cache");
-                System.out.println(lastModified);
-                System.out.println(lastAccessed);
-                System.out.println(dateLastModified.toString());
-                System.out.println(dateLastAccessed.toString());
-                System.out.println(isStale);
-                System.out.println(staleness);
+                if (!isStale) {
+                    OutputStream os = threadSocket.getOutputStream();
+                    os.write(html.getBytes());
+                    os.close();
+                    System.out.println("End of HTTP request");
+                    System.out.println("Retrieved from cache");
+                    System.out.println(lastModified);
+                    System.out.println(lastAccessed);
+                    System.out.println(dateLastModified.toString());
+                    System.out.println(dateLastAccessed.toString());
+                    System.out.println(isStale);
+                    System.out.println(staleness);
+                }
 
 
 
