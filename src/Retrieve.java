@@ -5,20 +5,24 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class Retrieve implements Runnable {
+    // Global variables to share information about browser with thread
     private static String browserRequest = "";
     private static Socket browserSocket;
 
 
+    /**
+     * This thread is instantiated whenever our forward proxy receives a request from the browser.
+     *
+     * The thread is responsible for serving the browser the page that was requested by either providing content from
+     * the locally created cache, or by requesting the content from the target server.
+     */
     @Override
     public void run() {
         Socket threadSocket = browserSocket;
 
-        String host = "";
+        // Parse the request from the browser to identify elements of the URL (the host and the path)
+        String host = browserRequest.split("/")[2];
         String path = "";
-
-        host = browserRequest.split("/")[2]; // Parse for host
-
-        // Parse for path
         int slashCount = 0;
         for(int i = 0; i < browserRequest.length(); i++) {
             if(browserRequest.charAt(i) == '/') {
@@ -32,16 +36,15 @@ public class Retrieve implements Runnable {
         System.out.println("host: " + host);
         System.out.println("path: " + path);
 
-        // Filter out special characters for filename to be cached
+        // Filter out special characters to create a file name for the potentially cached object
         String filename = host + path;
         filename = filename.replaceAll("[^a-zA-Z]", "").toLowerCase();
         System.out.println("filename: " + filename);
 
-        // Check if it is in cache
+        // Check if request is already in the cache
         File file = new File(filename + ".txt");
         boolean isStale = false;
         if (file.exists()) {
-
             System.out.println("Already in cache");
 
             BufferedReader br = null;
@@ -100,22 +103,14 @@ public class Retrieve implements Runnable {
                     System.out.println(staleness);
                 }
 
-
-
-
+                if (br != null)
+                    br.close();
+                if (fr != null)
+                    fr.close();
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (ParseException e) {
                 e.printStackTrace();
-            } finally {
-                try {
-                    if (br != null)
-                        br.close();
-                    if (fr != null)
-                        fr.close();
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                }
             }
         }
         if (isStale || !file.exists()) {
@@ -174,13 +169,11 @@ public class Retrieve implements Runnable {
 
                     FileWriter fw = new FileWriter(newFile);
                     bw = new BufferedWriter(fw);
-//                    System.out.println(html);
                     bw.write(html);
                     System.out.println("File cached successfully: " + filename + ".txt");
 
                     // Cache date
                     Date dateNow = new Date();
-
                     File dateFile = new File(filename + "_date.txt");
                     if (!dateFile.exists()) {
                         dateFile.createNewFile();
@@ -212,6 +205,12 @@ public class Retrieve implements Runnable {
     }
 
 
+    /**
+     * This is the main thread which acts as our server which is listening for requests. When requests are made to the
+     * forward proxy, we will create a new thread to handle that request.
+     *
+     * @param args
+     */
     public static void main(String[] args) {
         int PORT_NUMBER = 3000;
         String IP_ADDRESS;
