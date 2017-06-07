@@ -6,34 +6,12 @@ public class Retrieve implements Runnable {
     private static String browserRequest = "";
     private static Socket browserSocket;
 
-//    int cacheSize = 10;
-//    int cacheIndex = 0;
-//    String[] hosts = new String[cacheSize];
-//    String[] paths = new String[cacheSize];
-//    String[] dates = new String[cacheSize];
-//    String[] filenames = new String[cacheSize];
-//
-//    public void setHost(int index, String value) {
-//        hosts[index] = value;
-//    }
-//    public void setPath(int index, String value) {
-//        paths[index] = value;
-//    }
-//    public void setDate(int index, String value) {
-//        paths[index] = value;
-//    }
-//    public void setFilename(int index, String value) {
-//        paths[index] = value;
-//    }
-
     @Override
     public void run() {
         Socket threadSocket = browserSocket;
 
         String host = "";
         String path = "";
-
-//        System.out.println(browserRequest);
 
         host = browserRequest.split("/")[2]; // Parse for host
 
@@ -94,19 +72,6 @@ public class Retrieve implements Runnable {
             }
         }
         else {
-//        boolean inCache = false;
-//        for(int i = 0; i < hosts.length; i++) {
-//            System.out.println(host);
-//            System.out.println(hosts[i]);
-//            System.out.println(path);
-//            System.out.println(paths[i]);
-//            if(host.equals(hosts[i]) &&  path.equals(paths[i])) {
-//                System.out.println("Already in cache");
-//                inCache = true;
-//                // get result from cache
-//            }
-//        }
-
             System.out.println("Does not yet exist in cache");
 
             String originalPath = path;
@@ -135,7 +100,7 @@ public class Retrieve implements Runnable {
 
                 // Read the response from the stream using the "extract" method and print
                 String document = extract(inStream);
-                System.out.println(document);
+                System.out.println(document);  // TODO: This statement currently prints out normally
                 String html = document;
 
                 OutputStream os = threadSocket.getOutputStream();
@@ -174,17 +139,6 @@ public class Retrieve implements Runnable {
                         System.out.println("Error in closing the BufferedWriter"+ex);
                     }
                 }
-
-//                System.out.println("cacheIndex: " + cacheIndex);
-//                setHost(cacheIndex, host);
-//                setPath(cacheIndex, originalPath);
-//                setFilename(cacheIndex, filename);
-//                setDate(cacheIndex, (new Date()).toString());
-//                System.out.println(dates[cacheIndex]);
-//                cacheIndex++;
-//                System.out.println("cacheIndex: " + cacheIndex);
-
-
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -209,7 +163,8 @@ public class Retrieve implements Runnable {
                 socket = serverSocket.accept();
 
                 // Read the input stream of messages from other hosts
-                String command = extract(socket.getInputStream());
+                BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));  // TODO: Extract command does not work here
+                String command = br.readLine();
                 if(command == null) {
                     System.out.println("null command!");
                     command = "";
