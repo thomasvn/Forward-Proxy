@@ -39,6 +39,7 @@ public class Retrieve implements Runnable {
 
         // Check if it is in cache
         File file = new File(filename + ".txt");
+        boolean isStale = false;
         if (file.exists()) {
 
             System.out.println("Already in cache");
@@ -51,7 +52,6 @@ public class Retrieve implements Runnable {
             Date dateLastModified = new Date();
             String lastAccessed = "";
             Date dateLastAccessed = new Date();
-            boolean isStale = false;
             String staleness = "";
 
             // Sends cached data to browser if requested object is already in cache
@@ -111,7 +111,7 @@ public class Retrieve implements Runnable {
                 }
             }
         }
-        else {
+        if (isStale || !file.exists()) {
             System.out.println("Does not yet exist in cache");
 
             String originalPath = path;
