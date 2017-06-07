@@ -43,7 +43,6 @@ public class Retrieve implements Runnable {
 
         // Check if request is already in the cache
         File file = new File(filename + ".txt");
-        boolean isStale = false;
         if (file.exists()) {
             System.out.println("Already in cache");
 
@@ -55,11 +54,13 @@ public class Retrieve implements Runnable {
             Date dateLastModified = new Date();
             String lastAccessed = "";
             Date dateLastAccessed = new Date();
+            boolean isStale = false;
             String staleness = "";
 
             // Sends cached data to browser if requested object is already in cache
             try {
                 br = new BufferedReader(new FileReader(filename + ".txt"));
+
                 while ((line = br.readLine()) != null) {
                     System.out.println(line);
                     if(line.contains("Last-Modified:")) {
@@ -88,21 +89,16 @@ public class Retrieve implements Runnable {
                     }
                     html += (line + "\n");
                 }
-
                 if (!isStale) {
                     OutputStream os = threadSocket.getOutputStream();
                     os.write(html.getBytes());
                     os.close();
                     System.out.println("End of HTTP request");
                     System.out.println("Retrieved from cache");
-                    System.out.println(lastModified);
-                    System.out.println(lastAccessed);
-                    System.out.println(dateLastModified.toString());
-                    System.out.println(dateLastAccessed.toString());
-                    System.out.println(isStale);
+                    System.out.println("Last Modified: " + dateLastModified.toString());
+                    System.out.println("Last Access: " + dateLastAccessed.toString());
                     System.out.println(staleness);
                 }
-
                 if (br != null)
                     br.close();
                 if (fr != null)
