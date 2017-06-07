@@ -66,16 +66,21 @@ public class Retrieve implements Runnable {
                         dateLastModified = format.parse(lastModified);
 
                         BufferedReader br_date = new BufferedReader(new FileReader(filename + "_date.txt"));
-                        lastAccessed = br_date.readLine();
+                        lastAccessed = "" + br_date.readLine();
                         format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
-                        dateLastAccessed = format.parse(lastAccessed);
+                        System.out.println(lastAccessed);
+
+//                        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM HH:mm:ss z yyyy");
+                        dateLastAccessed = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy").parse(lastAccessed);
+
+//                        dateLastAccessed = format.parse(lastAccessed);
 
                         if (dateLastAccessed.before(dateLastModified)) {
                             isStale = true;
-                            staleness = "set to true";
+                            staleness = "Cached file is stale.";
                         } else {
                             isStale = false;
-                            staleness = "set to false";
+                            staleness = "Cached file is not stale.";
                         }
                     }
                     html += (line + "\n");
