@@ -1,5 +1,7 @@
 import java.io.*;
 import java.net.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class Retrieve implements Runnable {
@@ -34,14 +36,22 @@ public class Retrieve implements Runnable {
         filename = filename.replaceAll("[^a-zA-Z]", "").toLowerCase();
         System.out.println("filename: " + filename);
 
+        // Check if it is in cache
         File file = new File(filename + ".txt");
         if (file.exists()) {
+
             System.out.println("Already in cache");
 
             BufferedReader br = null;
             FileReader fr = null;
             String html = "";
             String line;
+            String lastModified = "";
+            Date dateLastModified = new Date();
+            String lastAccessed = "";
+            Date dateLastAccessed = new Date();
+            boolean isStale = false;
+            String staleness = "";
 
             // Sends cached data to browser if requested object is already in cache
             try {
@@ -49,6 +59,25 @@ public class Retrieve implements Runnable {
 
                 while ((line = br.readLine()) != null) {
                     System.out.println(line);
+                    if(line.contains("Last-Modified:")) {
+                        lastModified = line;
+                        lastModified = lastModified.replace("Last-Modified: ", "");
+                        SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
+                        dateLastModified = format.parse(lastModified);
+
+                        BufferedReader br_date = new BufferedReader(new FileReader(filename + "_date.txt"));
+                        lastAccessed = br_date.readLine();
+                        format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
+                        dateLastAccessed = format.parse(lastAccessed);
+
+                        if (dateLastAccessed.before(dateLastModified)) {
+                            isStale = true;
+                            staleness = "set to true";
+                        } else {
+                            isStale = false;
+                            staleness = "set to false";
+                        }
+                    }
                     html += (line + "\n");
                 }
 
@@ -57,8 +86,19 @@ public class Retrieve implements Runnable {
                 os.close();
                 System.out.println("End of HTTP request");
                 System.out.println("Retrieved from cache");
+                System.out.println(lastModified);
+                System.out.println(lastAccessed);
+                System.out.println(dateLastModified.toString());
+                System.out.println(dateLastAccessed.toString());
+                System.out.println(isStale);
+                System.out.println(staleness);
+
+
+
 
             } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ParseException e) {
                 e.printStackTrace();
             } finally {
                 try {
@@ -117,7 +157,10 @@ public class Retrieve implements Runnable {
 
                 // Store in cache, no cache replacement policy
                 BufferedWriter bw = null;
+                BufferedWriter bw_date = null;
+
                 try {
+                    // Cache http response
                     File newFile = new File(filename + ".txt");
                     if (!newFile.exists()) {
                         newFile.createNewFile();
@@ -125,8 +168,23 @@ public class Retrieve implements Runnable {
 
                     FileWriter fw = new FileWriter(newFile);
                     bw = new BufferedWriter(fw);
+//                    System.out.println(html);
                     bw.write(html);
                     System.out.println("File cached successfully: " + filename + ".txt");
+
+                    // Cache date
+                    Date dateNow = new Date();
+
+                    File dateFile = new File(filename + "_date.txt");
+                    if (!dateFile.exists()) {
+                        dateFile.createNewFile();
+                    }
+
+                    FileWriter fw_date = new FileWriter(dateFile);
+                    bw_date = new BufferedWriter(fw_date);
+                    bw_date.write(dateNow.toString());
+                    System.out.println("File date cached successfully: " + filename + "_date.txt");
+                    System.out.println(dateNow.toString());
                 }
                 catch (IOException ioe) {
                     ioe.printStackTrace();
@@ -135,6 +193,8 @@ public class Retrieve implements Runnable {
                     try{
                         if(bw!=null)
                             bw.close();
+                        if(bw_date!=null)
+                            bw_date.close();
                     } catch(Exception ex){
                         System.out.println("Error in closing the BufferedWriter"+ex);
                     }
