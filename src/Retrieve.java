@@ -10,6 +10,7 @@ public class Retrieve implements Runnable {
     private static Socket browserSocket;
 
 
+
     /**
      * This thread is instantiated whenever our forward proxy receives a request from the browser.
      *
@@ -43,6 +44,63 @@ public class Retrieve implements Runnable {
 
         // Check if request is already in the cache
         File file = new File(filename + ".txt");
+        boolean isStale = false;
+        String lastModified = "";
+        Date dateLastModified = new Date();
+
+        try {
+            // Instantiate the TCP client socket
+            Socket socket = new Socket(host, 80);
+
+            // Instantiate the objects to write/read to the socket
+            PrintWriter outStream = new PrintWriter(socket.getOutputStream());
+            InputStream inStream = socket.getInputStream();
+
+            // Log the HTTP GET request to the terminal
+            System.out.println("\nHEAD " + path + " HTTP/1.1\r\n" +
+                    "Host: " + host + "\r\n" +
+                    "Connection: close\r\n" +
+                    "coen168: 1234\r\n\r\n");
+
+            // Sends an HTTP GET request to the web server
+            outStream.print("HEAD " + path + " HTTP/1.1\r\n" +
+                    "Host: " + host + "\r\n" +
+                    "Connection: close\r\n\r\n");
+
+            outStream.flush();
+
+            // Read the response from the stream using the "extract" method and print
+            String document = extract(inStream);
+            String html = document;
+
+            BufferedReader bufReader = new BufferedReader(new StringReader(html));
+            String line=null;
+            while( (line=bufReader.readLine()) != null )
+            {
+                if(line.contains("Last-Modified:")) {
+                    lastModified = line;
+                    lastModified = lastModified.replace("Last-Modified: ", "");
+                    SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
+                    dateLastModified = format.parse(lastModified);
+                }
+            }
+
+            System.out.println(html);
+            System.out.println("printed HEAD");
+
+            // Close the IO streams
+            outStream.close();
+            inStream.close();
+
+            // Close the socket
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+
         if (file.exists()) {
             System.out.println("Already in cache");
 
@@ -50,43 +108,48 @@ public class Retrieve implements Runnable {
             FileReader fr = null;
             String html = "";
             String line;
-            String lastModified = "";
-            Date dateLastModified = new Date();
+//            String lastModified = "";
+//            Date dateLastModified = new Date();
             String lastAccessed = "";
             Date dateLastAccessed = new Date();
-            boolean isStale = false;
             String staleness = "";
+
+//            if(line.contains("Last-Modified:")) {
+//                lastModified = line;
+//                lastModified = lastModified.replace("Last-Modified: ", "");
+//                SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
+//                dateLastModified = format.parse(lastModified);
+
+            BufferedReader br_date = null;
+            try {
+                br_date = new BufferedReader(new FileReader(filename + "_date.txt"));
+                lastAccessed = "" + br_date.readLine();
+                SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
+                System.out.println(lastAccessed);
+                dateLastAccessed = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy").parse(lastAccessed);
+            } catch (ParseException e) {
+                e.printStackTrace();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+
+            if (dateLastAccessed.before(dateLastModified)) {
+                isStale = true;
+                staleness = "Cached file is stale.";
+            } else {
+                isStale = false;
+                staleness = "Cached file is not stale.";
+            }
+
 
             // Sends cached data to browser if requested object is already in cache
             try {
                 br = new BufferedReader(new FileReader(filename + ".txt"));
-
                 while ((line = br.readLine()) != null) {
                     System.out.println(line);
-                    if(line.contains("Last-Modified:")) {
-                        lastModified = line;
-                        lastModified = lastModified.replace("Last-Modified: ", "");
-                        SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
-                        dateLastModified = format.parse(lastModified);
-
-                        BufferedReader br_date = new BufferedReader(new FileReader(filename + "_date.txt"));
-                        lastAccessed = "" + br_date.readLine();
-                        format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
-                        System.out.println(lastAccessed);
-
-//                        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM HH:mm:ss z yyyy");
-                        dateLastAccessed = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy").parse(lastAccessed);
-
-//                        dateLastAccessed = format.parse(lastAccessed);
-
-                        if (dateLastAccessed.before(dateLastModified)) {
-                            isStale = true;
-                            staleness = "Cached file is stale.";
-                        } else {
-                            isStale = false;
-                            staleness = "Cached file is not stale.";
-                        }
-                    }
                     html += (line + "\n");
                 }
                 if (!isStale) {
@@ -104,8 +167,6 @@ public class Retrieve implements Runnable {
                 if (fr != null)
                     fr.close();
             } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ParseException e) {
                 e.printStackTrace();
             }
         }
