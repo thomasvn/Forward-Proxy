@@ -49,7 +49,7 @@ public class Retrieve implements Runnable {
         String lastModified = "";
         Date dateLastModified = new Date();
 
-// ------------------------------- Retrieve the state of the web object from the target server -------------------------
+// -------------------------- Retrieve the time stamp of the web object from the target server -------------------------
         try {
             // Instantiate the TCP client socket
             Socket socket = new Socket(host, 80);
@@ -118,7 +118,7 @@ public class Retrieve implements Runnable {
                 br_date = new BufferedReader(new FileReader(filename + "_date.txt"));
                 lastAccessed = "" + br_date.readLine();
                 SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
-                System.out.println(lastAccessed);
+//                System.out.println("Last Accessed: " + lastAccessed);
                 dateLastAccessed = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy").parse(lastAccessed);
             } catch (ParseException e) {
                 e.printStackTrace();
@@ -140,7 +140,6 @@ public class Retrieve implements Runnable {
             try {
                 br = new BufferedReader(new FileReader(filename + ".txt"));
                 while ((line = br.readLine()) != null) {
-                    System.out.println(line);
                     html += (line + "\n");
                 }
                 if (!isStale) {
@@ -159,7 +158,7 @@ public class Retrieve implements Runnable {
                     System.out.println("Retrieved from cache");
                     System.out.println("Last Modified: " + dateLastModified.toString());
                     System.out.println("Last Access: " + dateLastAccessed.toString());
-                    System.out.println(staleness);
+                    System.out.println("Staleness: " + staleness);
                 }
                 if (br != null)
                     br.close();
@@ -214,31 +213,31 @@ public class Retrieve implements Runnable {
                 // Close the socket
                 socket.close();
 
-                // Store in cache, no cache replacement policy
+                // Store request in cache as a text file on server, no cache replacement policy
                 BufferedWriter bw = null;
                 BufferedWriter bw_date = null;
 
                 try {
-                    // Cache http response
                     File newFile = new File(filename + ".txt");
                     if (!newFile.exists()) {
                         newFile.createNewFile();
                     }
-
                     FileWriter fw = new FileWriter(newFile);
                     bw = new BufferedWriter(fw);
-                    // Cache the byte array if the request is made for an image. Cache the string if it is anything else
+
+                    // Cache the byte array and request header if the request is made for an image.
                     if (html.contains("Content-Type: image")) {
                         FileOutputStream fos = new FileOutputStream(filename + ".txt");
                         fos.write(document);
                         fos.close();
                     }
+                    // Cache a string of the document and the request header if it is not an image
                     else{
                         bw.write(html);
                     }
                     System.out.println("File cached successfully: " + filename + ".txt");
 
-                    // Cache date
+                    // Cache the date to know when it was last acessed
                     Date dateNow = new Date();
                     File dateFile = new File(filename + "_date.txt");
                     if (!dateFile.exists()) {
@@ -248,8 +247,8 @@ public class Retrieve implements Runnable {
                     FileWriter fw_date = new FileWriter(dateFile);
                     bw_date = new BufferedWriter(fw_date);
                     bw_date.write(dateNow.toString());
-                    System.out.println("File date cached successfully: " + filename + "_date.txt");
-                    System.out.println(dateNow.toString());
+//                    System.out.println("File date cached successfully: " + filename + "_date.txt");
+//                    System.out.println(dateNow.toString());
 
                     if(bw!=null)
                         bw.close();
