@@ -3,12 +3,12 @@ import java.net.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.nio.file.*;
 
 public class Retrieve implements Runnable {
     // Global variables to share information about browser with thread
     private static String browserRequest = "";
     private static Socket browserSocket;
-
 
 
     /**
@@ -19,6 +19,7 @@ public class Retrieve implements Runnable {
      */
     @Override
     public void run() {
+// ---------------------------------------- Pre-process data about web object ------------------------------------------
         Socket threadSocket = browserSocket;
 
         // Parse the request from the browser to identify elements of the URL (the host and the path)
@@ -48,6 +49,7 @@ public class Retrieve implements Runnable {
         String lastModified = "";
         Date dateLastModified = new Date();
 
+// ------------------------------- Retrieve the state of the web object from the target server -------------------------
         try {
             // Instantiate the TCP client socket
             Socket socket = new Socket(host, 80);
@@ -56,13 +58,13 @@ public class Retrieve implements Runnable {
             PrintWriter outStream = new PrintWriter(socket.getOutputStream());
             InputStream inStream = socket.getInputStream();
 
-            // Log the HTTP GET request to the terminal
+            // Log the HTTP HEAD request to the terminal
             System.out.println("\nHEAD " + path + " HTTP/1.1\r\n" +
                     "Host: " + host + "\r\n" +
                     "Connection: close\r\n" +
                     "coen168: 1234\r\n\r\n");
 
-            // Sends an HTTP GET request to the web server
+            // Sends an HTTP HEAD request to the web server
             outStream.print("HEAD " + path + " HTTP/1.1\r\n" +
                     "Host: " + host + "\r\n" +
                     "Connection: close\r\n\r\n");
@@ -70,13 +72,12 @@ public class Retrieve implements Runnable {
             outStream.flush();
 
             // Read the response from the stream using the "extract" method and print
-            String document = extract(inStream);
-            String html = document;
+            byte[] document = extract(inStream);
+            String html = new String(document, "UTF-8");
 
             BufferedReader bufReader = new BufferedReader(new StringReader(html));
             String line=null;
-            while( (line=bufReader.readLine()) != null )
-            {
+            while((line=bufReader.readLine()) != null ) {
                 if(line.contains("Last-Modified:")) {
                     lastModified = line;
                     lastModified = lastModified.replace("Last-Modified: ", "");
@@ -85,8 +86,8 @@ public class Retrieve implements Runnable {
                 }
             }
 
-            System.out.println(html);
-            System.out.println("printed HEAD");
+//            System.out.println(html);
+//            System.out.println("printed HEAD");
 
             // Close the IO streams
             outStream.close();
@@ -100,7 +101,7 @@ public class Retrieve implements Runnable {
             e.printStackTrace();
         }
 
-
+// ------------------------------ Check if web objects are stale if they're in the cache -------------------------------
         if (file.exists()) {
             System.out.println("Already in cache");
 
@@ -108,17 +109,9 @@ public class Retrieve implements Runnable {
             FileReader fr = null;
             String html = "";
             String line;
-//            String lastModified = "";
-//            Date dateLastModified = new Date();
             String lastAccessed = "";
             Date dateLastAccessed = new Date();
             String staleness = "";
-
-//            if(line.contains("Last-Modified:")) {
-//                lastModified = line;
-//                lastModified = lastModified.replace("Last-Modified: ", "");
-//                SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
-//                dateLastModified = format.parse(lastModified);
 
             BufferedReader br_date = null;
             try {
@@ -135,7 +128,6 @@ public class Retrieve implements Runnable {
                 e.printStackTrace();
             }
 
-
             if (dateLastAccessed.before(dateLastModified)) {
                 isStale = true;
                 staleness = "Cached file is stale.";
@@ -143,7 +135,6 @@ public class Retrieve implements Runnable {
                 isStale = false;
                 staleness = "Cached file is not stale.";
             }
-
 
             // Sends cached data to browser if requested object is already in cache
             try {
@@ -154,7 +145,15 @@ public class Retrieve implements Runnable {
                 }
                 if (!isStale) {
                     OutputStream os = threadSocket.getOutputStream();
-                    os.write(html.getBytes());
+                    // Send the byte array to the browser if it is an image, send a string if it is plaintext
+                    if (html.contains("Content-Type: image")) {
+                        Path p = Paths.get(filename + ".txt");
+                        byte[] doc = Files.readAllBytes(p);
+                        os.write(doc);
+                    }
+                    else {
+                        os.write(html.getBytes());
+                    }
                     os.close();
                     System.out.println("End of HTTP request");
                     System.out.println("Retrieved from cache");
@@ -170,6 +169,8 @@ public class Retrieve implements Runnable {
                 e.printStackTrace();
             }
         }
+
+// ------------------------------------ Retrieve web objects if not currently in cache ---------------------------------
         if (isStale || !file.exists()) {
             System.out.println("Does not yet exist in cache");
 
@@ -198,11 +199,11 @@ public class Retrieve implements Runnable {
                 outStream.flush();
 
                 // Read the response from the stream using the "extract" method and print
-                String document = extract(inStream);
-                String html = document;
+                byte[] document = extract(inStream);
+                String html = new String(document, "UTF-8");
 
                 OutputStream os = threadSocket.getOutputStream();
-                os.write(html.getBytes());
+                os.write(document);
                 os.close();
                 System.out.println("End of HTTP request");
 
@@ -226,7 +227,15 @@ public class Retrieve implements Runnable {
 
                     FileWriter fw = new FileWriter(newFile);
                     bw = new BufferedWriter(fw);
-                    bw.write(html);
+                    // Cache the byte array if the request is made for an image. Cache the string if it is anything else
+                    if (html.contains("Content-Type: image")) {
+                        FileOutputStream fos = new FileOutputStream(filename + ".txt");
+                        fos.write(document);
+                        fos.close();
+                    }
+                    else{
+                        bw.write(html);
+                    }
                     System.out.println("File cached successfully: " + filename + ".txt");
 
                     // Cache date
@@ -241,19 +250,14 @@ public class Retrieve implements Runnable {
                     bw_date.write(dateNow.toString());
                     System.out.println("File date cached successfully: " + filename + "_date.txt");
                     System.out.println(dateNow.toString());
+
+                    if(bw!=null)
+                        bw.close();
+                    if(bw_date!=null)
+                        bw_date.close();
                 }
                 catch (IOException ioe) {
                     ioe.printStackTrace();
-                }
-                finally {
-                    try{
-                        if(bw!=null)
-                            bw.close();
-                        if(bw_date!=null)
-                            bw_date.close();
-                    } catch(Exception ex){
-                        System.out.println("Error in closing the BufferedWriter"+ex);
-                    }
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -261,7 +265,7 @@ public class Retrieve implements Runnable {
         }
     }
 
-
+// ------------------------------------------- Listening Server Code ---------------------------------------------------
     /**
      * This is the main thread which acts as our server which is listening for requests. When requests are made to the
      * forward proxy, we will create a new thread to handle that request.
@@ -310,6 +314,7 @@ public class Retrieve implements Runnable {
     }
 
 
+// ---------------------------------------------- Helper Methods -------------------------------------------------------
     /**
      * This method takes an input stream and extracts all bytes that were sent. It places everything from the stream
      * into a byte array. Then returns a conversion of this byte array to a string.
@@ -318,7 +323,7 @@ public class Retrieve implements Runnable {
      * @return
      * @throws IOException
      */
-    private static String extract(InputStream inputStream) throws IOException {
+    private static byte[] extract(InputStream inputStream) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         byte[] buffer = new byte[1024];
         int read = 0;
@@ -326,7 +331,7 @@ public class Retrieve implements Runnable {
             baos.write(buffer, 0, read);
         }
         baos.flush();
-        return  new String(baos.toByteArray(), "UTF-8");
+        return  baos.toByteArray();
     }
 }
 
